@@ -12,25 +12,50 @@ The package can be installed using pip:
 $ pip3 install elicznik
 ```
 
+or alternatively:
+```
+$ pip3 install git@github.com:mlesniew/elicznik.git
+```
+
+
 
 ## Command line usage
 
 With the package installed readings can be retrieved by simply running the `elicznik` command:
 ```
-usage: elicznik [-h] [--format {table,csv}] [--api {chart,csv}] username password [start_date] [end_date]
+usage: elicznik [-h] [--format {table,csv}] [--api {chart,csv}] [--site SITE] username password [start_date] [end_date]
 
 positional arguments:
   username              tauron-dystrybucja.pl user name
   password              tauron-dystrybucja.pl password
-  start_date            Start date of date range to be retrieved, in ISO8601 format. If the end date is omitted, it's the only date for which
-                        measurements are retrieved.
-  end_date              End date of date range to be retrieved, inclusive, in ISO8601 format. Can be omitted to only retrieve a single day's
-                        measurements.
+  start_date            Start date of date range to be retrieved, in ISO8601 format. If the end date is omitted, it's the only date for which measurements are retrieved.
+  end_date              End date of date range to be retrieved, inclusive, in ISO8601 format. Can be omitted to only retrieve a single day's measurements.
 
 options:
   -h, --help            show this help message and exit
   --format {table,csv}  Specify the output format
-  --api {chart,csv}     Specify which Tauron API to use to get the measurements.
+  --api {chart,csv}     Specify which Tauron API to use to get the measurements
+  --site SITE           site identifier, must match '[0-9]+_[0-9]+_[0-9]+'
+(venv) ~/src/elicznik (site) $ elicznik --help | cat
+usage: elicznik [-h] [--format {table,csv}] [--api {chart,csv}] [--site SITE]
+                username password [start_date] [end_date]
+
+positional arguments:
+  username              tauron-dystrybucja.pl user name
+  password              tauron-dystrybucja.pl password
+  start_date            Start date of date range to be retrieved, in ISO8601
+                        format. If the end date is omitted, it's the only date
+                        for which measurements are retrieved.
+  end_date              End date of date range to be retrieved, inclusive, in
+                        ISO8601 format. Can be omitted to only retrieve a
+                        single day's measurements.
+
+options:
+  -h, --help            show this help message and exit
+  --format {table,csv}  Specify the output format
+  --api {chart,csv}     Specify which Tauron API to use to get the
+                        measurements
+  --site SITE           site identifier, must match '[0-9]+_[0-9]+_[0-9]+'
 ```
 
 
@@ -73,14 +98,14 @@ timestamp              consumed    produced    net consumption    net production
 import datetime
 import elicznik
 
-with elicznik.ELicznik("freddy@example.com", "secretpassword") as m:
+with elicznik.ELicznik("freddy@example.com", "secretpassword", "optional_site_identifier") as m:
     # date range
     print("July 2021")
 
     readings = m.get_readings(datetime.date(2021, 7, 1), datetime.date(2021, 7, 31))
 
-    for timestamp, consumed, produced in readings:
-        print(timestamp, consumed, produced)
+    for timestamp, consumed, produced, consumed_net, produced_net in readings:
+        print(timestamp, consumed, produced, consumed_net, produced_net)
 
     # single day
     print("Yesterday")
@@ -88,8 +113,8 @@ with elicznik.ELicznik("freddy@example.com", "secretpassword") as m:
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     readings = m.get_readings(yesterday)
 
-    for timestamp, consumed, produced in readings:
-        print(timestamp, consumed, produced)
+    for timestamp, consumed, produced, consumed_net, produced_net in readings:
+        print(timestamp, consumed, produced, consumed_net, produced_net)
 ```
 
 
@@ -121,7 +146,6 @@ with elicznik.ELicznikChart("freddy@example.com", "secretpassword") as m:
 
 ## TODO & bugs
 
-* Add support for accounts with multiple meters
 * Convert the dates to UTC and handle switches from and to DST properly
 * Make the dependency on tabulate optional
 

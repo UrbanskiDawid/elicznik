@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 
+import collections
 import csv
 import datetime
 
 from .session import Session
 
 
+Reading = collections.namedtuple("Reading", "timestamp consumption production net_consumption net_production")
+
+
 class ELicznikBase:
     LOGIN_URL = "https://logowanie.tauron-dystrybucja.pl/login"
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, site=None):
         self.username = username
         self.password = password
+        self.site = site
 
     def login(self):
         self.session = Session()
@@ -24,6 +29,13 @@ class ELicznikBase:
                 "service": "https://elicznik.tauron-dystrybucja.pl",
             },
         )
+        if self.site is not None:
+            self.session.post(
+                "https://elicznik.tauron-dystrybucja.pl/ustaw_punkt",
+                data={
+                    "site[client]": self.site
+                },
+            )
 
     def __enter__(self):
         self.login()
@@ -77,7 +89,7 @@ class ELicznikChart(ELicznikBase):
         # This probably drops the data from the double hour during DST change
         # Needs to be investigated and fixed
         return sorted(
-            tuple([timestamp] + [results[name].get(timestamp) for name in COLUMNS])
+            Reading(*([timestamp] + [results[name].get(timestamp) for name in COLUMNS]))
             for timestamp in timestamps
         )
 
@@ -148,7 +160,7 @@ class ELicznikCSV(ELicznikBase):
         # This probably drops the data from the double hour during DST change
         # Needs to be investigated and fixed
         return sorted(
-            tuple([timestamp] + [results[name].get(timestamp) for name in COLUMNS])
+            Reading(*([timestamp] + [results[name].get(timestamp) for name in COLUMNS]))
             for timestamp in timestamps
         )
 
